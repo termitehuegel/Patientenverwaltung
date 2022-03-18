@@ -64,4 +64,7 @@ public class Patient {
     public void setPlz(String plz) {
         this.plz = plz;
     }
+    public String[] toStringArray() {
+        return new String[]{name, firstName, bloodGroup, birthday, street, plz};
+    }
 }
