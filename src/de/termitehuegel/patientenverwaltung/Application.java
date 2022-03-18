@@ -1,15 +1,18 @@
 package de.termitehuegel.patientenverwaltung;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Application {
     ArrayList<Patient> list = new ArrayList<>();
-    int selected = 0;
     private JButton submit;
     private JPanel mainPanel;
     private JLabel nameLabel;
@@ -28,6 +31,10 @@ public class Application {
     private JButton nextButton;
     private JButton previousButton;
     private JButton editButton;
+    private JTabbedPane tabbedPane;
+    private JTable patientsJTable;
+    private JPanel newJPanel;
+    private JScrollPane patientsJScollPane;
 
     public static void main(String[] args) throws IOException {
         JFrame frame = new JFrame("Patientenverwaltung");
@@ -44,59 +51,42 @@ public class Application {
         bloodGroupComboBox.addItem("AB");
         bloodGroupComboBox.addItem("0");
 
+        DefaultTableModel model = new DefaultTableModel(null, new Object[]{"Name", "Vorname", "Blutgruppe", "Gebrutstag", "Straße", "Postleitzahl"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        patientsJTable.setModel(model);
+
         submit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 list.add(new Patient(nameTextField.getText(), firstNameTextField.getText(), (String) bloodGroupComboBox.getSelectedItem(), birthdayTextField.getText(), streetTextField.getText(), plzTextField.getText()));
                 clear();
-            }
-        });
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                list.remove(selected);
-                clear();
-            }
-        });
-        nextButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selected = (selected+1)%list.size();
                 update();
             }
         });
-        previousButton.addActionListener(new ActionListener() {
+        patientsJTable.addKeyListener(new KeyAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                selected--;
-                if (selected < 0) {
-                    selected = list.size()-1;
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+                if (e.getKeyCode() == 8 || e.getKeyCode() == 127) {
+                    int[] selected = patientsJTable.getSelectedRows();
+                    for (int i=selected.length-1; i>=0; i--) {
+                        list.remove(selected[i]);
+                    }
+                    update();
                 }
-                update();
-            }
-        });
-        editButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Patient patient = list.get(selected);
-                patient.setName(nameTextField.getText());
-                patient.setFirstName(firstNameTextField.getText());
-                patient.setBirthday(birthdayTextField.getText());
-                patient.setPlz(plzTextField.getText());
-                patient.setStreet(streetTextField.getText());
-                patient.setBloodGroup((String) bloodGroupComboBox.getSelectedItem());
             }
         });
     }
 
 
     private void update() {
-        nameTextField.setText(list.get(selected).getName());
-        firstNameTextField.setText(list.get(selected).getFirstName());
-        birthdayTextField.setText(list.get(selected).getBirthday());
-        streetTextField.setText(list.get(selected).getStreet());
-        plzTextField.setText(list.get(selected).getPlz());
-        bloodGroupComboBox.setSelectedItem(list.get(selected).getBloodGroup());
+        DefaultTableModel model = (DefaultTableModel) patientsJTable.getModel();
+        model.setRowCount(0);
+        list.forEach((x) -> model.addRow(x.toStringArray()));
     }
 
     private void clear() {
@@ -105,6 +95,5 @@ public class Application {
         birthdayTextField.setText("");
         streetTextField.setText("");
         plzTextField.setText("");
-        bloodGroupComboBox.setSelectedIndex(0);
     }
 }
